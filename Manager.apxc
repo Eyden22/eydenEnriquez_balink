@@ -1,0 +1,80 @@
+public class Manager {
+    public static String createAccountList(String Name, String Description, String URLImage) { 
+        try {
+            AccountList__c accountList = new AccountList__c(Name = Name, Description__c = Description, URLImage__c = URLImage);
+            insert accountList;
+            
+            Map < String, String > response = new Map < String, String > {
+                'response_type' => 'success',
+                    'id' => accountList.Id
+                    };
+                        return JSON.serialize(response);
+            
+        } catch (DMLException e) {
+            Map < String, String > response = new Map < String, String > {
+                'response_type' => 'failed',
+                    'message' => e.getMessage()
+                    };
+                        return JSON.serialize(response);
+        }
+        
+    }
+    
+    public static String addOrUpdateAccountListMember(AccountList__c accountList, Account account) {
+        
+        AccountListMember__c member = getMemberByAccountId(account); 
+        if (member == null) { 
+            return addAccountListMember(accountList, account);
+        } else {
+            return updateAccountListMember(member, accountList);
+        }
+        
+    }
+    
+    private static AccountListMember__c getMemberByAccountId(Account account) {
+        AccountListMember__c accountListMember;
+        for (AccountListMember__c member: [SELECT AccountId__c, AccountListId__c FROM AccountListMember__c WHERE AccountId__c =: account.Id]) {
+            accountListMember = member;
+        }
+        return accountListMember; 
+        
+    }
+    
+    
+    private static String updateAccountListMember(AccountListMember__c accountListMember, AccountList__c accountList) {
+        
+        try {
+            accountListMember.AccountListId__c = accountList.Id;
+            update accountListMember;
+            Map < String, String > response = new Map < String, String > {
+                'response_type' => 'success',
+                    'id' => accountListMember.Id
+                    };
+                        return JSON.serialize(response);
+        } catch (DMLException e) {
+            Map < String, String > response = new Map < String, String > {
+                'response_type' => 'failed',
+                    'message' => e.getMessage()
+                    };
+                        return JSON.serialize(response);
+        }
+    }
+    
+    private static String addAccountListMember(AccountList__c accountList, Account account) {
+        try {
+            AccountListMember__c accountListMember = new AccountListMember__c(AccountListId__c = accountList.Id, AccountId__c = account.Id);
+            insert accountListMember;
+            Map < String, String > response = new Map < String, String > {
+                'response_type' => 'success',
+                    'id' => accountListMember.Id
+                    };
+                        return JSON.serialize(response);
+        } catch (DMLException e) {
+            Map < String, String > response = new Map < String, String > {
+                'response_type' => 'failed',
+                    'message' => e.getMessage()
+                    };
+                        return JSON.serialize(response);
+        }
+    }   
+}

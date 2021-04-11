@@ -1,0 +1,52 @@
+@isTest
+public class ManagerTest {
+    @isTest static void testNameIsRequired() {
+        
+        String response = Manager.createAccountList('', 'Bob', 'https://google.com');
+        Map < String, String > b = (Map < String, String > ) JSON.deserialize(response, Map < String, String > .class);
+        System.debug(b);
+        System.assert(b.toString().contains('The name cannot be blank'));
+    }
+    
+    @isTest static void testNameIsUnique() {
+        String response = Manager.createAccountList('Alice', 'Bob', 'https://google.com');
+        String new_response = Manager.createAccountList('Alice', 'John', 'https://facebook.com');
+        Map < String, String > b = (Map < String, String > ) JSON.deserialize(new_response, Map < String, String > .class);
+        System.debug(b);
+        System.assert(b.toString().contains('The name already exists'));
+    }
+    
+    @isTest static void testCreateMember() {
+        Account acc1 = new Account(Name = 'Bob');
+        insert(acc1);
+        
+        AccountList__c list1 = new AccountList__c(Name = 'Customers');
+        insert(list1);
+        
+        String response = Manager.addOrUpdateAccountListMember(list1, acc1);
+        AccountListMember__c memberAfterCreate = [SELECT AccountId__c, AccountListId__c FROM AccountListMember__c WHERE AccountId__c =: acc1.Id];
+        
+        System.assertEquals(memberAfterCreate.AccountListId__c, list1.Id);
+    }
+    
+    @isTest static void testUpdateMember() {
+        Account acc1 = new Account(Name = 'Bob');
+        insert(acc1);
+        
+        AccountList__c list1 = new AccountList__c(Name = 'Customers');
+        insert(list1);
+        
+        AccountList__c list2 = new AccountList__c(Name = 'Admins');
+        insert(list2);
+        
+        AccountListMember__c member = new AccountListMember__c(AccountId__c = acc1.Id, AccountListId__c = list1.Id);
+        insert(member);
+        
+        String response = Manager.addOrUpdateAccountListMember(list2, acc1);
+        
+        AccountListMember__c memberAfterUpdate = [SELECT AccountId__c, AccountListId__c FROM AccountListMember__c WHERE AccountId__c =: acc1.Id];
+        
+        System.assertEquals(memberAfterUpdate.AccountListId__c, list2.Id);
+    }
+    
+}
